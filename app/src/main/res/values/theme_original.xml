@@ -11,7 +11,10 @@
         <item name="backgroundColor">#ffffff</item>
         <item name="healthBarColor">#00ff00</item>
         <item name="healthBarBackgroundColor">#000000</item>
-        <item name="levelIndicatorColor">#ff0000</item>
+        <item name="levelIndicatorColorStroke">#ff444444</item>
+        <item name="levelIndicatorColorLvl1">#00d000</item>
+        <item name="levelIndicatorColorLvl2">#00b0ff</item>
+        <item name="levelIndicatorColorLvl3">#ff5050</item>
         <item name="rangeIndicatorColor">#8000ff00</item>
         <item name="explosionColor">#b4ffff00</item>
         <item name="laserColor">#b4ff0000</item>

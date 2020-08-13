@@ -1,6 +1,7 @@
 package ch.logixisland.anuto;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
 import ch.logixisland.anuto.business.game.GameLoader;
@@ -49,6 +50,9 @@ import ch.logixisland.anuto.entity.tower.Teleporter;
 
 public class GameFactory {
 
+    // Other
+    private final SharedPreferences mPreferences;
+
     // Engine
     private ThemeManager mThemeManager;
     private SoundManager mSoundManager;
@@ -80,6 +84,7 @@ public class GameFactory {
 
     public GameFactory(Context context) {
         PreferenceManager.setDefaultValues(context, R.xml.settings, false);
+        mPreferences = PreferenceManager.getDefaultSharedPreferences(context);
 
         initializeEngine(context);
         registerEntities();
@@ -137,7 +142,7 @@ public class GameFactory {
         mSpeedManager = new GameSpeed(mGameEngine);
         mWaveManager = new WaveManager(mGameEngine, mScoreBoard, mGameState, mEntityRegistry, mTowerAging);
         mTowerControl = new TowerControl(mGameEngine, mScoreBoard, mTowerSelector, mEntityRegistry);
-        mTowerInserter = new TowerInserter(mGameEngine, mGameState, mEntityRegistry, mTowerSelector, mTowerAging, mScoreBoard);
+        mTowerInserter = new TowerInserter(mGameEngine, mGameState, mEntityRegistry, mTowerSelector, mTowerAging, mScoreBoard, mPreferences);
         mTutorialControl = new TutorialControl(context, mTowerInserter, mTowerSelector, mWaveManager);
     }
 

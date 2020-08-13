@@ -1,10 +1,14 @@
 package ch.logixisland.anuto.entity.tower;
 
+import android.content.SharedPreferences;
 import android.graphics.Canvas;
+import android.preference.PreferenceManager;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import ch.logixisland.anuto.AnutoApplication;
+import ch.logixisland.anuto.Preferences;
 import ch.logixisland.anuto.engine.logic.GameEngine;
 import ch.logixisland.anuto.engine.logic.entity.Entity;
 import ch.logixisland.anuto.engine.logic.loop.TickTimer;
@@ -14,7 +18,10 @@ import ch.logixisland.anuto.entity.enemy.WeaponType;
 import ch.logixisland.anuto.entity.plateau.Plateau;
 import ch.logixisland.anuto.util.iterator.StreamIterator;
 
-public abstract class Tower extends Entity {
+public abstract class Tower extends Entity implements SharedPreferences.OnSharedPreferenceChangeListener {
+
+    private final SharedPreferences mPreferences;
+    private boolean mShowLevelEnabled;
 
     public interface Listener {
         void damageInflicted(float totalDamage);
@@ -46,6 +53,8 @@ public abstract class Tower extends Entity {
     Tower(GameEngine gameEngine, TowerProperties towerProperties) {
         super(gameEngine);
 
+        mPreferences = PreferenceManager.getDefaultSharedPreferences(AnutoApplication.getContext());
+
         mTowerProperties = towerProperties;
 
         mValue = mTowerProperties.getValue();
@@ -67,7 +76,9 @@ public abstract class Tower extends Entity {
     @Override
     public void clean() {
         super.clean();
+        mPreferences.unregisterOnSharedPreferenceChangeListener(this);
         hideRange();
+        hideLevel();
 
         if (mPlateau != null) {
             mPlateau.setOccupied(false);
@@ -113,7 +124,10 @@ public abstract class Tower extends Entity {
     public void setBuilt() {
         mBuilt = true;
         mReloaded = true;
+
+        mPreferences.registerOnSharedPreferenceChangeListener(this);
         updateStrength();
+        updateShowLevel();
     }
 
     public WeaponType getWeaponType() {
@@ -234,6 +248,23 @@ public abstract class Tower extends Entity {
         if (mRangeIndicator != null) {
             getGameEngine().remove(mRangeIndicator);
             mRangeIndicator = null;
+        }
+    }
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        if (Preferences.SHOW_TOWER_LEVELS_ENABLED.equals(key)) {
+            updateShowLevel();
+        }
+    }
+
+    private void updateShowLevel() {
+        mShowLevelEnabled = mPreferences.getBoolean(Preferences.SHOW_TOWER_LEVELS_ENABLED, false);
+
+        if (mShowLevelEnabled) {
+            showLevel();
+        } else {
+            hideLevel();
         }
     }
 

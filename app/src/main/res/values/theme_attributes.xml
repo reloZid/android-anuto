@@ -10,7 +10,10 @@
     <attr name="shadowColor" format="color" />
     <attr name="healthBarColor" format="color" />
     <attr name="healthBarBackgroundColor" format="color" />
-    <attr name="levelIndicatorColor" format="color" />
+    <attr name="levelIndicatorColorStroke" format="color"/>
+    <attr name="levelIndicatorColorLvl1" format="color"/>
+    <attr name="levelIndicatorColorLvl2" format="color"/>
+    <attr name="levelIndicatorColorLvl3" format="color"/>
     <attr name="rangeIndicatorColor" format="color" />
     <attr name="explosionColor" format="color" />
     <attr name="laserColor" format="color" />

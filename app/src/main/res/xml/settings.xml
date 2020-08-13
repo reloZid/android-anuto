@@ -16,6 +16,10 @@
         android:key="transparent_menus_enabled"
         android:defaultValue="false"
         android:title="@string/transparent_menus" />
+    <SwitchPreference
+        android:key="show_tower_levels_enabled"
+        android:defaultValue="false"
+        android:title="@string/show_tower_levels"/>
     <ListPreference
         android:key="back_button_mode"
         android:defaultValue="@string/back_button_mode_disabled"
