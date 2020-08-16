@@ -22,6 +22,7 @@
     <string name="start_tutorial">Start tutorial</string>
     <string name="start_tutorial_warning">Are you sure you want to start the tutorial? The game will restart.</string>
     <string name="transparent_menus">Transparent in-game menus</string>
+    <string name="enable_auto_waves">Enable auto start new wave</string>
 
     <string name="game_over">Game Over!</string>
     <string name="score">Score</string>

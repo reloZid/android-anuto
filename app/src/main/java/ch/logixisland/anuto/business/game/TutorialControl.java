@@ -111,6 +111,11 @@ public class TutorialControl implements TowerInserter.Listener, WaveManager.List
     }
 
     @Override
+    public void autoWaveChanged() {
+
+    }
+
+    @Override
     public void nextWaveReadyChanged() {
 
     }

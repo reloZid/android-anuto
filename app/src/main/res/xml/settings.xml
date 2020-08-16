@@ -16,6 +16,10 @@
         android:key="transparent_menus_enabled"
         android:defaultValue="false"
         android:title="@string/transparent_menus" />
+    <SwitchPreference
+        android:key="auto_waves_enabled"
+        android:defaultValue="false"
+        android:title="@string/enable_auto_waves"/>
     <ListPreference
         android:key="back_button_mode"
         android:defaultValue="@string/back_button_mode_disabled"

@@ -33,7 +33,8 @@ public class DefaultGameSimulator extends GameSimulator {
     private final TowerTiers mTowerTiers;
     private final Random mRandom = new Random();
     private final TickTimer mSaveAndLoadTimer = TickTimer.createInterval(120f);
-    private final TickTimer mSGTimer = TickTimer.createInterval(30f);
+    private final TickTimer mSGTimer = TickTimer.createInterval(60f);
+    private final TickTimer mAutoWaveTickTimer = TickTimer.createInterval(20f);
     private final TickTimer mSimulationTickTimer = TickTimer.createInterval(0.5f);
 
     private int mSGMode = 0;
@@ -57,21 +58,25 @@ public class DefaultGameSimulator extends GameSimulator {
         }
 
         if (mSGTimer.tick()) {
-            switch (++mSGMode) {
-                default:
-                    //for mSaveAndLoadTimer
-                    mSGMode = 0;
-                    break;
+            switch (mSGMode = (mSGMode + 1) % 4) {
                 case 1:
                     saveSG();
                     break;
+                default:
                 case 2:
-                    loadSG();
+                    //for mSaveAndLoadTimer
                     break;
                 case 3:
+                    loadSG();
+                    break;
+                case 4:
                     deleteSG();
                     break;
             }
+        }
+
+        if (mAutoWaveTickTimer.tick()) {
+            switchAutoWave();
         }
     }
 
@@ -284,6 +289,16 @@ public class DefaultGameSimulator extends GameSimulator {
         if (waveManager.isNextWaveReady() && waveManager.getRemainingEnemiesCount() < 50) {
             waveManager.startNextWave();
         }
+    }
+
+    private void switchAutoWave() {
+        final WaveManager waveManager = getGameFactory().getWaveManager();
+
+        boolean newState = !waveManager.isAutoNextWaveActive();
+        if (newState && waveManager.getRemainingEnemiesCount() < 60) {
+            waveManager.setAutoNextWaveActive(true);
+        } else
+            waveManager.setAutoNextWaveActive(false);
     }
 
     private StreamIterator<Tower> getTowers() {

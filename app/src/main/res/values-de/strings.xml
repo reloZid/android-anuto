@@ -54,6 +54,8 @@
     <string name="back_button_mode">Schließen mit Zurück-Taste</string>
     <string name="normal_speed">1x</string>
     <string name="transparent_menus">Transparente Menüs im Spiel</string>
+    <string name="enable_auto_waves">Automatischen Start der nächste Welle erlauben</string>
+
     <string name="map_hurry_name">Beeilung!</string>
     <string name="map_original_name">Das Original</string>
     <string name="map_turn_round_name">Eine Runde drehen</string>

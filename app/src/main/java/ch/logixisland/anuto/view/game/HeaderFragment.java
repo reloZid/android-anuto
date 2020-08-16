@@ -2,8 +2,10 @@ package ch.logixisland.anuto.view.game;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,21 +18,26 @@ import java.util.List;
 
 import ch.logixisland.anuto.AnutoApplication;
 import ch.logixisland.anuto.GameFactory;
+import ch.logixisland.anuto.Preferences;
 import ch.logixisland.anuto.R;
 import ch.logixisland.anuto.business.game.GameSpeed;
 import ch.logixisland.anuto.business.game.ScoreBoard;
 import ch.logixisland.anuto.business.tower.TowerSelector;
 import ch.logixisland.anuto.business.wave.WaveManager;
+import ch.logixisland.anuto.engine.theme.Theme;
 import ch.logixisland.anuto.util.StringUtils;
 import ch.logixisland.anuto.view.AnutoFragment;
 
 public class HeaderFragment extends AnutoFragment implements WaveManager.Listener, ScoreBoard.Listener,
-        GameSpeed.Listener, View.OnClickListener {
+        GameSpeed.Listener, View.OnClickListener, SharedPreferences.OnSharedPreferenceChangeListener {
+
+    private final SharedPreferences mPreferences;
 
     private final WaveManager mWaveManager;
     private final GameSpeed mSpeedManager;
     private final ScoreBoard mScoreBoard;
     private final TowerSelector mTowerSelector;
+    private final Theme mTheme;
 
     private Handler mHandler;
 
@@ -42,6 +49,7 @@ public class HeaderFragment extends AnutoFragment implements WaveManager.Listene
     private TextView txt_bonus;
 
     private Button btn_next_wave;
+    private CheckBox checkbox_auto_next_wave;
     private Button btn_fast_forward;
     private CheckBox checkbox_fast_active;
     private Button btn_menu;
@@ -55,6 +63,10 @@ public class HeaderFragment extends AnutoFragment implements WaveManager.Listene
         mWaveManager = factory.getWaveManager();
         mSpeedManager = factory.getSpeedManager();
         mTowerSelector = factory.getTowerSelector();
+        mTheme = factory.getThemeManager().getTheme();
+
+        mPreferences = PreferenceManager.getDefaultSharedPreferences(AnutoApplication.getContext());
+        mPreferences.registerOnSharedPreferenceChangeListener(this);
     }
 
     @Override
@@ -71,12 +83,15 @@ public class HeaderFragment extends AnutoFragment implements WaveManager.Listene
         txt_bonus = v.findViewById(R.id.txt_bonus);
 
         btn_next_wave = v.findViewById(R.id.btn_next_wave);
+        checkbox_auto_next_wave = v.findViewById(R.id.checkbox_auto_next_wave);
+        checkbox_auto_next_wave.setVisibility(mPreferences.getBoolean(Preferences.AUTO_WAVES_ENABLED, false) ? View.VISIBLE : View.GONE);
         btn_fast_forward = v.findViewById(R.id.btn_fast_forward);
         checkbox_fast_active = v.findViewById(R.id.checkbox_fast_active);
         btn_menu = v.findViewById(R.id.btn_menu);
         btn_build_tower = v.findViewById(R.id.btn_build_tower);
 
         btn_next_wave.setOnClickListener(this);
+        checkbox_auto_next_wave.setOnClickListener(this);
         btn_fast_forward.setOnClickListener(this);
         checkbox_fast_active.setOnClickListener(this);
         btn_menu.setOnClickListener(this);
@@ -89,6 +104,7 @@ public class HeaderFragment extends AnutoFragment implements WaveManager.Listene
         txt_lives.setText(getString(R.string.lives) + ": " + mScoreBoard.getLives());
         txt_bonus.setText(getString(R.string.bonus) + ": " + StringUtils.formatSuffix(mScoreBoard.getWaveBonus() + mScoreBoard.getEarlyBonus()));
         btn_fast_forward.setText(getString(R.string.var_speed, mSpeedManager.fastForwardMultiplier()));
+        checkbox_auto_next_wave.setTextColor(mTheme.getColor(R.attr.textColor));
 
         final List<TowerView> towerViews = new ArrayList<>();
         towerViews.add((TowerView) v.findViewById(R.id.view_tower_1));
@@ -147,6 +163,14 @@ public class HeaderFragment extends AnutoFragment implements WaveManager.Listene
             return;
         }
 
+        if (v == checkbox_auto_next_wave) {
+            boolean checked = checkbox_auto_next_wave.isChecked();
+            if (checked != mWaveManager.isAutoNextWaveActive())
+                mWaveManager.setAutoNextWaveActive(checked);
+            return;
+        }
+
+
         if (v == btn_fast_forward) {
             mSpeedManager.cycleFastForward();
             return;
@@ -177,12 +201,28 @@ public class HeaderFragment extends AnutoFragment implements WaveManager.Listene
 
     }
 
-    @Override
-    public void waveNumberChanged() {
+    private void updateWaveText(final int waveNumber, final int remainingEnemiesCount) {
         mHandler.post(new Runnable() {
             @Override
             public void run() {
-                txt_wave.setText(getString(R.string.wave) + ": " + mWaveManager.getWaveNumber() + " (" + mWaveManager.getRemainingEnemiesCount() + ")");
+                txt_wave.setText(getString(R.string.wave) + ": " + waveNumber + " (" + remainingEnemiesCount + ")");
+            }
+        });
+    }
+
+    @Override
+    public void waveNumberChanged() {
+        updateWaveText(mWaveManager.getWaveNumber(), mWaveManager.getRemainingEnemiesCount());
+    }
+
+    @Override
+    public void autoWaveChanged() {
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                boolean checked = mWaveManager.isAutoNextWaveActive();
+                if (checked != checkbox_auto_next_wave.isChecked())
+                    checkbox_auto_next_wave.setChecked(checked);
             }
         });
     }
@@ -199,12 +239,7 @@ public class HeaderFragment extends AnutoFragment implements WaveManager.Listene
 
     @Override
     public void remainingEnemiesCountChanged() {
-        mHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                txt_wave.setText(getString(R.string.wave) + ": " + mWaveManager.getWaveNumber() + " (" + mWaveManager.getRemainingEnemiesCount() + ")");
-            }
-        });
+        updateWaveText(mWaveManager.getWaveNumber(), mWaveManager.getRemainingEnemiesCount());
     }
 
     @Override
@@ -249,5 +284,12 @@ public class HeaderFragment extends AnutoFragment implements WaveManager.Listene
                     checkbox_fast_active.setChecked(checked);
             }
         });
+    }
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        if (Preferences.AUTO_WAVES_ENABLED.equals(key)) {
+            checkbox_auto_next_wave.setVisibility(mPreferences.getBoolean(Preferences.AUTO_WAVES_ENABLED, false) ? View.VISIBLE : View.GONE);
+        }
     }
 }

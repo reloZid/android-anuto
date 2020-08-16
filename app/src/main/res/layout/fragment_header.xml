@@ -102,13 +102,21 @@
             android:minWidth="40dp"
             android:text="@string/next_wave" />
 
+        <CheckBox android:id="@+id/checkbox_auto_next_wave"
+            android:layout_width="wrap_content"
+            android:layout_height="35dp"
+            android:layout_centerVertical="true"
+            android:layout_toStartOf="@id/btn_next_wave"
+            android:layout_marginEnd="-2dp"
+            android:text="" />
+
         <Button
             android:id="@+id/btn_fast_forward"
             style="?android:attr/buttonStyleSmall"
             android:layout_width="wrap_content"
             android:layout_height="35dp"
             android:layout_centerVertical="true"
-            android:layout_toStartOf="@id/btn_next_wave"
+            android:layout_toStartOf="@id/checkbox_auto_next_wave"
             android:layout_marginEnd="3dp"
             android:minWidth="10dp"
             android:text="@string/normal_speed" />

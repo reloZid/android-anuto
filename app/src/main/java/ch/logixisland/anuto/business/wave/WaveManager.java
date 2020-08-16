@@ -1,5 +1,6 @@
 package ch.logixisland.anuto.business.wave;
 
+import android.content.SharedPreferences;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -7,6 +8,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import ch.logixisland.anuto.GameSettings;
+import ch.logixisland.anuto.Preferences;
 import ch.logixisland.anuto.business.game.GameState;
 import ch.logixisland.anuto.business.game.ScoreBoard;
 import ch.logixisland.anuto.business.tower.TowerAging;
@@ -18,11 +20,15 @@ import ch.logixisland.anuto.engine.logic.map.WaveInfo;
 import ch.logixisland.anuto.engine.logic.persistence.Persister;
 import ch.logixisland.anuto.util.container.KeyValueStore;
 
-public class WaveManager implements Persister, GameState.Listener {
+public class WaveManager implements Persister, GameState.Listener, SharedPreferences.OnSharedPreferenceChangeListener {
 
     private static final String TAG = WaveManager.class.getSimpleName();
 
     private static final float NEXT_WAVE_MIN_DELAY = 5;
+
+    private final SharedPreferences mSharedPreferences;
+    private boolean mAutoWavesEnabled;
+    private boolean mAutoWavesActive;
 
     public interface Listener {
         void waveStarted();
@@ -30,6 +36,8 @@ public class WaveManager implements Persister, GameState.Listener {
         void waveNumberChanged();
 
         void nextWaveReadyChanged();
+
+        void autoWaveChanged();
 
         void remainingEnemiesCountChanged();
     }
@@ -49,7 +57,7 @@ public class WaveManager implements Persister, GameState.Listener {
     private final List<Listener> mListeners = new CopyOnWriteArrayList<>();
 
     public WaveManager(GameEngine gameEngine, ScoreBoard scoreBoard, GameState gameState,
-                       EntityRegistry entityRegistry, TowerAging towerAging) {
+                       EntityRegistry entityRegistry, TowerAging towerAging, SharedPreferences sharedPreferences) {
         mGameEngine = gameEngine;
         mScoreBoard = scoreBoard;
         mGameState = gameState;
@@ -59,6 +67,18 @@ public class WaveManager implements Persister, GameState.Listener {
         mEnemyDefaultHealth = new EnemyDefaultHealth(entityRegistry);
 
         mGameState.addListener(this);
+
+        mSharedPreferences = sharedPreferences;
+        mSharedPreferences.registerOnSharedPreferenceChangeListener(this);
+        mAutoWavesEnabled = mSharedPreferences.getBoolean(Preferences.AUTO_WAVES_ENABLED, false);
+    }
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        if (Preferences.AUTO_WAVES_ENABLED.equals(key)) {
+            mAutoWavesEnabled = mSharedPreferences.getBoolean(Preferences.AUTO_WAVES_ENABLED, false);
+            handleAutoWave();
+        }
     }
 
     public int getWaveNumber() {
@@ -238,6 +258,9 @@ public class WaveManager implements Persister, GameState.Listener {
         if (mRemainingEnemiesCount != totalCount) {
             mRemainingEnemiesCount = totalCount;
 
+            //nur wenn (mRemainingEnemiesCount < 200) aktiv ist
+            //autoWave();
+
             for (Listener listener : mListeners) {
                 listener.remainingEnemiesCountChanged();
             }
@@ -318,9 +341,35 @@ public class WaveManager implements Persister, GameState.Listener {
         if (mNextWaveReady != ready) {
             mNextWaveReady = ready;
 
+            if (handleAutoWave()) {
+                return;
+            }
+
             for (Listener listener : mListeners) {
                 listener.nextWaveReadyChanged();
             }
         }
+    }
+
+    public boolean isAutoNextWaveActive() {
+        return mAutoWavesActive;
+    }
+
+    public void setAutoNextWaveActive(boolean checked) {
+        mAutoWavesActive = checked;
+        handleAutoWave();
+
+        for (Listener listener : mListeners) {
+            listener.autoWaveChanged();
+        }
+    }
+
+    private boolean handleAutoWave() {
+        if (mAutoWavesEnabled && mAutoWavesActive && (mWaveNumber > 0) && (mNextWaveReady) && (true || (mRemainingEnemiesCount < 200))) {
+            startNextWave();
+            return true;
+        }
+
+        return false;
     }
 }
